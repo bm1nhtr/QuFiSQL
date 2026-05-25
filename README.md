@@ -1,10 +1,63 @@
-# Quant Finance — Application Console MySQL
+# [QuFiSQL] MySQL Console Application - Quant Finance
+
+> **English Version :** [README.en.md](README.en.md)
 
 Application Python en ligne de commande pour gérer les **clients** d'une société de gestion de patrimoine. Elle se connecte à une base MySQL et propose un menu interactif (CRUD, recherche, statistiques, détail avec données associées).
 
 ---
 
+## Table des matières
+
+- [Documentation](#documentation)
+  - [Rapport de projet (PDF)](#rapport-bdd) — livrable principal *(modélisation, requêtes, application)
+  - [Modèle conceptuel de données (MCD)](#modèle-conceptuel-de-données-mcd)
+- [Instructions de lancement](#instructions-de-lancement)
+  - [Prérequis](#prérequis)
+  - [Compatibilité multi-OS](#compatibilité-multi-os)
+  - [Étape 0 — Vue d'ensemble](#étape-0--vue-densemble-ordre-obligatoire)
+  - [Étape 1 — Installer et configurer MySQL](#étape-1--installer-et-configurer-mysql)
+  - [Étape 2 — Créer la base de données](#étape-2--créer-la-base-de-données-scripts-sql)
+  - [Étape 3 — Configurer le fichier `.env`](#étape-3--configurer-les-accès-mysql-fichier-env)
+  - [Étape 4 — Installer les dépendances Python](#étape-4--installer-les-dépendances-python)
+  - [Étape 5 — Lancer l'application](#étape-5--lancer-lapplication)
+  - [Dépannage](#dépannage-problèmes-courants)
+- [Domaine choisi](#domaine-choisi)
+- [Règles métiers](#règles-métiers)
+- [Dictionnaire des données](#dictionnaire-des-données)
+  - [Gestionnaire](#gestionnaire)
+  - [Client](#client-entité-principale-de-lapplication)
+  - [Portefeuille](#portefeuille)
+  - [Instrument](#instrument-résumé)
+  - [Position](#position-résumé)
+  - [PrixHistorique](#prixhistorique-résumé)
+  - [Transaction](#transaction-résumé)
+- [Guide de réutilisation](#guide-de-réutilisation)
+  - [Structure du projet](#structure-du-projet)
+  - [Changer les identifiants MySQL](#changer-les-identifiants-mysql)
+  - [Ajouter une fonctionnalité au menu](#ajouter-une-nouvelle-fonctionnalité-au-menu)
+  - [Commandes de développement](#commandes-de-développement)
+  - [Sécurité](#sécurité--que-cacher-)
+- [Fonctionnalités du menu](#fonctionnalités-du-menu)
+- [Version anglaise](#version-anglaise)
+
+---
+
 ## Documentation
+
+### Rapport BDD
+
+**Livrable principal du projet** — à consulter pour l'évaluation.
+
+**[Ouvrir le rapport (PDF) → docs/Rapport_BDD.pdf](docs/Rapport_BDD.pdf)**
+
+| Contenu du rapport | |
+|--------------------|---|
+| Modélisation | MCD, MLD, dictionnaire des données, règles métiers |
+| Requêtes SQL | 15 requêtes d'analyse (R1–R15) |
+| Application | Description de l'interface console Python |
+| Annexes | Code source, scripts SQL |
+
+### Autres ressources
 
 | Ressource | Description |
 |-----------|-------------|
@@ -34,9 +87,20 @@ Le projet comporte **deux parties distinctes** à configurer séparément :
 
 | Outil | Version | Vérification |
 |-------|---------|--------------|
-| Python | 3.10+ | `python --version` |
+| Python | 3.10+ | `python --version` ou `python3 --version` |
 | Poetry | 2.x | `poetry --version` |
 | MySQL Server | 8+ | Voir étape 1 ci-dessous |
+
+### Compatibilité multi-OS
+
+Compatible **Windows 10+**, **macOS 12+** (Intel et Apple Silicon) et **Linux**. L'application Python utilise `pathlib` et ne contient aucune dépendance spécifique à un système — le même code fonctionne sur tous les OS.
+
+| Élément | Windows | macOS / Linux |
+|---------|---------|---------------|
+| Terminal | PowerShell ou CMD | Terminal (bash/zsh) |
+| Copier `.env` | `Copy-Item .env.example .env` | `cp .env.example .env` |
+| Interpréteur Poetry | `.venv/Scripts/python.exe` | `.venv/bin/python` |
+| Scripts SQL (CLI) | Voir alternative PowerShell ci-dessous | `mysql -u root -p < sql/...` |
 
 ---
 
@@ -55,23 +119,55 @@ Le projet comporte **deux parties distinctes** à configurer séparément :
 
 ### Étape 1 — Installer et configurer MySQL
 
-#### Option A — MySQL Installer (recommandé, Windows)
+#### Windows
+
+##### Option A — MySQL Installer (recommandé)
 
 1. Télécharger [MySQL Installer](https://dev.mysql.com/downloads/installer/)
 2. Choisir **MySQL Server** (+ optionnel : **MySQL Workbench** pour une interface graphique)
 3. Lors de l'installation, définir un mot de passe pour l'utilisateur `root` (à retenir pour `.env`)
 4. Laisser le port par défaut : **3306**
 5. Vérifier que le service MySQL est démarré :
-   - Windows : `Services` → chercher **MySQL80** (ou similaire) → statut **En cours d'exécution**
+   - `Services` → chercher **MySQL80** (ou similaire) → statut **En cours d'exécution**
    - Ou en PowerShell : `Get-Service -Name "*mysql*"`
 
-#### Option B — XAMPP (alternative simple)
+##### Option B — XAMPP (alternative simple)
 
 1. Installer [XAMPP](https://www.apachefriends.org/)
 2. Démarrer **MySQL** depuis le panneau de contrôle XAMPP
 3. Par défaut : utilisateur `root`, mot de passe **vide** (`DB_PASSWORD=` dans `.env`)
 
-#### Vérifier la connexion MySQL
+#### macOS
+
+##### Option A — Homebrew (recommandé)
+
+1. Installer [Homebrew](https://brew.sh/) si nécessaire
+2. Installer MySQL :
+   ```bash
+   brew install mysql
+   ```
+3. Démarrer le service :
+   ```bash
+   brew services start mysql
+   ```
+4. Sécuriser l'installation (définir le mot de passe `root`) :
+   ```bash
+   mysql_secure_installation
+   ```
+5. Vérifier que MySQL écoute sur le port **3306** :
+   ```bash
+   brew services list
+   ```
+
+##### Option B — Installeur DMG MySQL
+
+1. Télécharger [MySQL Community Server](https://dev.mysql.com/downloads/mysql/) (macOS)
+2. Suivre l'assistant d'installation et définir un mot de passe pour `root`
+3. Démarrer MySQL :
+   - **Préférences Système → MySQL → Start MySQL Server**, ou
+   - En terminal : `mysql.server start`
+
+#### Vérifier la connexion MySQL (tous OS)
 
 **Via MySQL Workbench :**
 - Ouvrir Workbench → connexion `Local instance MySQL` → entrer le mot de passe `root`
@@ -81,6 +177,10 @@ Le projet comporte **deux parties distinctes** à configurer séparément :
 mysql -u root -p
 ```
 Si vous voyez le prompt `mysql>`, la connexion fonctionne. Tapez `EXIT;` pour quitter.
+
+> Sous macOS avec Homebrew, si `mysql` n'est pas reconnu, ajouter au PATH :  
+> `echo 'export PATH="/opt/homebrew/opt/mysql/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc`  
+> (Intel : remplacer `/opt/homebrew` par `/usr/local`)
 
 ---
 
@@ -95,11 +195,11 @@ Deux scripts, **dans cet ordre** :
 
 Le fichier `sql/requetes.sql` contient des requêtes **SELECT** d'analyse (R1–R15) — il ne crée ni tables ni données. À exécuter séparément pour tester des requêtes SQL.
 
-#### Méthode 1 — MySQL Workbench (recommandé pour débutants)
+#### Méthode 1 — MySQL Workbench (recommandé pour débutants, tous OS)
 
 1. Ouvrir **MySQL Workbench** et se connecter
 2. **File → Open SQL Script…** → sélectionner `sql/script_creation.sql`
-3. Cliquer sur l'icône **Execute** (éclair) ou `Ctrl+Shift+Enter`
+3. Cliquer sur l'icône **Execute** (éclair) ou `Ctrl+Shift+Enter` (macOS : `Cmd+Shift+Enter`)
 4. Vérifier le message de succès dans l'onglet **Action Output**
 5. Répéter avec `sql/ScriptDML.sql`
 
@@ -107,16 +207,22 @@ Le fichier `sql/requetes.sql` contient des requêtes **SELECT** d'analyse (R1–
 
 Depuis la racine du projet (`QuFiSQL/`) :
 
+**macOS / Linux (bash ou zsh) :**
 ```bash
 mysql -u root -p < sql/script_creation.sql
 mysql -u root -p < sql/ScriptDML.sql
 ```
 
-Sous **PowerShell** (Windows), si la redirection `<` ne fonctionne pas :
-
+**Windows (PowerShell)** — si la redirection `<` ne fonctionne pas :
 ```powershell
 Get-Content sql/script_creation.sql | mysql -u root -p
 Get-Content sql/ScriptDML.sql | mysql -u root -p
+```
+
+**Windows (CMD ou Git Bash)** — la syntaxe bash fonctionne aussi :
+```bash
+mysql -u root -p < sql/script_creation.sql
+mysql -u root -p < sql/ScriptDML.sql
 ```
 
 #### Vérifier que les données sont bien insérées
@@ -133,7 +239,7 @@ SELECT COUNT(*) FROM Gestionnaire; -- doit retourner 6
 
 Copier le template et renseigner **votre** mot de passe MySQL :
 
-**Linux / macOS :**
+**macOS / Linux :**
 ```bash
 cp .env.example .env
 ```
@@ -173,7 +279,7 @@ Cela crée un environnement virtuel `.venv/` et installe :
 
 ### Étape 5 — Lancer l'application
 
-**Terminal (recommandé) :**
+**Terminal (recommandé) — macOS, Linux et Windows :**
 ```bash
 poetry run python -m src
 ```
@@ -185,8 +291,16 @@ poetry run python main.py
 
 **Dans un IDE (Cursor / VS Code / PyCharm) :**
 1. Ouvrir le dossier `QuFiSQL/` comme projet
-2. Sélectionner l'interpréteur Python : `.venv/Scripts/python.exe` (Windows) ou `.venv/bin/python` (Linux/macOS)
+2. Sélectionner l'interpréteur Python selon votre OS :
+
+| OS | Chemin de l'interpréteur |
+|----|--------------------------|
+| Windows | `.venv/Scripts/python.exe` |
+| macOS / Linux | `.venv/bin/python` |
+
 3. Lancer `main.py` ou exécuter le module `src` (`python -m src`)
+
+> Sous macOS, ouvrir le **Terminal** intégré (Cursor/VS Code : `` Ctrl+` ``) ou l'application Terminal, se placer dans le dossier `QuFiSQL/`, puis lancer les commandes Poetry ci-dessus.
 
 Si la connexion réussit, vous verrez :
 ```
@@ -200,20 +314,28 @@ Puis le menu interactif s'affiche.
 
 ### Dépannage (problèmes courants)
 
-| Erreur | Cause probable | Solution |
-|--------|----------------|----------|
-| `Can't connect to MySQL server on 'localhost'` | MySQL non démarré | Démarrer le service MySQL (Services Windows ou XAMPP) |
-| `Access denied for user 'root'@'localhost'` | Mot de passe incorrect | Vérifier `DB_PASSWORD` dans `.env` |
-| `Unknown database 'quant_finance'` | Scripts SQL non exécutés | Relancer `script_creation.sql` puis `ScriptDML.sql` |
-| `Table 'quant_finance.Client' doesn't exist` | DDL non exécuté | Exécuter `script_creation.sql` |
-| `poetry: command not found` | Poetry non installé | `pip install poetry` ou voir [poetry.org](https://python-poetry.org/docs/#installation) |
-| Menu vide / aucun client | DML non exécuté | Exécuter `ScriptDML.sql` |
+| Erreur | Cause probable | Windows | macOS |
+|--------|----------------|---------|-------|
+| `Can't connect to MySQL server on 'localhost'` | MySQL non démarré | Services → MySQL80, ou XAMPP | `brew services start mysql` ou `mysql.server start` |
+| `Access denied for user 'root'@'localhost'` | Mot de passe incorrect | Vérifier `DB_PASSWORD` dans `.env` | Idem |
+| `Unknown database 'quant_finance'` | Scripts SQL non exécutés | Relancer `script_creation.sql` puis `ScriptDML.sql` | Idem |
+| `Table 'quant_finance.Client' doesn't exist` | DDL non exécuté | Exécuter `script_creation.sql` | Idem |
+| `poetry: command not found` | Poetry non installé | `pip install poetry` | `pip install poetry` ou `brew install poetry` |
+| `mysql: command not found` | Client MySQL absent du PATH | Réinstaller MySQL ou ajouter au PATH | `brew install mysql` puis configurer le PATH (voir étape 1) |
+| Menu vide / aucun client | DML non exécuté | Exécuter `ScriptDML.sql` | Idem |
 
-**Réinitialiser complètement la base :**
+**Réinitialiser complètement la base (macOS / Linux / Git Bash) :**
 ```bash
 mysql -u root -p -e "DROP DATABASE IF EXISTS quant_finance;"
 mysql -u root -p < sql/script_creation.sql
 mysql -u root -p < sql/ScriptDML.sql
+```
+
+**Réinitialiser sous PowerShell (Windows) :**
+```powershell
+mysql -u root -p -e "DROP DATABASE IF EXISTS quant_finance;"
+Get-Content sql/script_creation.sql | mysql -u root -p
+Get-Content sql/ScriptDML.sql | mysql -u root -p
 ```
 
 ---
@@ -354,7 +476,8 @@ Certaines règles sont enforced directement dans le schéma MySQL (`sql/script_c
 
 ```
 QuFiSQL/
-├── README.md
+├── README.md               # Documentation complète (français)
+├── README.en.md            # Documentation (English)
 ├── pyproject.toml          # Dépendances Poetry
 ├── poetry.lock
 ├── .env.example            # Template de configuration (sans secrets)
@@ -428,3 +551,9 @@ poetry run ruff check . --fix
 | 8 | Détail client + gestionnaire + portefeuilles |
 | 9 | Lister les gestionnaires disponibles |
 | 0 | Quitter |
+
+---
+
+## Version anglaise
+
+Documentation condensée en anglais : **[README.en.md](README.en.md)**
