@@ -37,7 +37,7 @@ Command-line Python application for managing **clients** at a wealth-management 
 
 **Main project deliverable** (French).
 
-**[Open report (PDF) → docs/Rapport_BDD.pdf](docs/Rapport_BDD.pdf)**
+**[Open report (PDF) → docs/Rapport_BDD.pdf]()**
 
 | Report contents | |
 |-----------------|---|
