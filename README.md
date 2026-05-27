@@ -61,7 +61,7 @@ Application Python en ligne de commande pour gérer les **clients** d'une socié
 
 | Ressource                            | Description |
 |--------------------------------------|-------------|
-| [Rapport (PDF, en anglais) — bientôt disponible]() | Rapport complet du projet (modélisation, requêtes, application) |
+| [Rapport (PDF, en anglais)](docs/BDD_report.pdf) | Rapport complet du projet (modélisation, requêtes, application) |
 | MCD (ci-dessous)                     | Modèle conceptuel de données — 7 entités, relations et cardinalités |
 
 ### Modèle conceptuel de données (MCD)
