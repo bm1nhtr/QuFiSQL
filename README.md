@@ -484,7 +484,8 @@ QuFiSQL/
 ├── .env                    # Config locale (gitignored)
 ├── main.py                 # Shim → délègue à src/
 ├── docs/                   # Documentation et livrables
-│   ├── Rapport_BDD.pdf     # Rapport complet du projet
+│   ├── Rapport_BDD.pdf     # Rapport complet du projet (Français)
+│   ├── BDD_report.pdf      # Rapport complet du projet (English)
 │   └── MCD_Quant_Finance.jpg  # Modèle conceptuel de données
 ├── sql/                    # Scripts SQL
 │   ├── script_creation.sql # DDL (schéma)

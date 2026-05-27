@@ -325,6 +325,7 @@ QuFiSQL/
 ├── main.py
 ├── docs/
 │   ├── Rapport_BDD.pdf     # Full project report (French)
+│   ├── BDD_report.pdf      # Full project report (English)
 │   └── MCD_Quant_Finance.jpg
 ├── sql/
 │   ├── script_creation.sql # DDL schema
