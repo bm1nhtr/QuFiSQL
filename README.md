@@ -8,31 +8,28 @@ Application Python en ligne de commande pour gérer les **clients** d'une socié
 
 ## Table des matières
 
-- [Documentation](#documentation)
-  - [Rapport de projet (PDF)](#rapport-bdd) — livrable principal *(modélisation, requêtes, application)
-  - [Modèle conceptuel de données (MCD)](#modèle-conceptuel-de-données-mcd)
-- [Instructions de lancement](#instructions-de-lancement)
+- [Démarrage rapide](#démarrage-rapide)
+  - [Par où commencer ?](#par-où-commencer-)
+  - [Étape A — Base de données](#étape-a--base-de-données)
+  - [Étape B — Application Python](#étape-b--application-python)
+  - [Checklist](#checklist)
+- [Installation détaillée](#installation-détaillée)
   - [Prérequis](#prérequis)
+  - [Installer Poetry (si nécessaire)](#installer-poetry-si-nécessaire)
   - [Compatibilité multi-OS](#compatibilité-multi-os)
-  - [Étape 0 — Vue d'ensemble](#étape-0--vue-densemble-ordre-obligatoire)
-  - [Étape 1 — Installer et configurer MySQL](#étape-1--installer-et-configurer-mysql)
-  - [Étape 2 — Créer la base de données](#étape-2--créer-la-base-de-données-scripts-sql)
-  - [Étape 3 — Configurer le fichier `.env`](#étape-3--configurer-les-accès-mysql-fichier-env)
-  - [Étape 4 — Installer les dépendances Python](#étape-4--installer-les-dépendances-python)
-  - [Étape 5 — Lancer l'application](#étape-5--lancer-lapplication)
-  - [Dépannage](#dépannage-problèmes-courants)
+  - [Installer MySQL (si nécessaire)](#1-installer-mysql-si-nécessaire)
+  - [Exécuter les scripts SQL (détails)](#2-exécuter-les-scripts-sql-détails)
+  - [Configurer `.env`](#3-configurer-env)
+  - [Installer et lancer l'application](#4-installer-et-lancer-lapplication)
+- [Dépannage](#dépannage)
+- [Documentation](#documentation)
+  - [Rapport BDD (PDF)](#rapport-bdd)
+  - [Modèle conceptuel de données (MCD)](#modèle-conceptuel-de-données-mcd)
 - [Domaine choisi](#domaine-choisi)
 - [Règles métiers](#règles-métiers)
 - [Dictionnaire des données](#dictionnaire-des-données)
-  - [Gestionnaire](#gestionnaire)
-  - [Client](#client-entité-principale-de-lapplication)
-  - [Portefeuille](#portefeuille)
-  - [Instrument](#instrument-résumé)
-  - [Position](#position-résumé)
-  - [PrixHistorique](#prixhistorique-résumé)
-  - [Transaction](#transaction-résumé)
+- [Arborescence du projet](#arborescence-du-projet)
 - [Guide de réutilisation](#guide-de-réutilisation)
-  - [Structure du projet](#structure-du-projet)
   - [Changer les identifiants MySQL](#changer-les-identifiants-mysql)
   - [Ajouter une fonctionnalité au menu](#ajouter-une-nouvelle-fonctionnalité-au-menu)
   - [Commandes de développement](#commandes-de-développement)
@@ -42,46 +39,96 @@ Application Python en ligne de commande pour gérer les **clients** d'une socié
 
 ---
 
-## Documentation
+## Démarrage rapide
 
-### Rapport BDD
+> Les scripts SQL s'exécutent dans **MySQL Workbench** ou le **terminal** — pas dans l'IDE Python. L'application Python se contente de se connecter à une base déjà créée.
 
-**Livrable principal du projet** — à consulter pour l'évaluation.
+### Par où commencer ?
 
-**[Ouvrir le rapport (PDF) → docs/Rapport_BDD.pdf](docs/Rapport_BDD.pdf)**
+| Votre situation | Commencez ici |
+|-----------------|---------------|
+| MySQL installé et démarré, base **pas encore** créée | **[Étape A](#étape-a--base-de-données)** — scripts SQL |
+| Base `quant_finance` **déjà** créée et peuplée | **[Étape B](#étape-b--application-python)** — `.env` + Poetry + lancer l'app |
+| MySQL **pas encore** installé | Installer MySQL → [Installation détaillée §1](#1-installer-mysql-si-nécessaire), puis **Étape A** → **Étape B** |
+| **Poetry** pas installé (`poetry: command not found`) | [Installer Poetry](#installer-poetry-si-nécessaire), puis **Étape B** |
+| Erreur au lancement | [Dépannage](#dépannage) |
 
-| Contenu du rapport | |
-|--------------------|---|
-| Modélisation | MCD, MLD, dictionnaire des données, règles métiers |
-| Requêtes SQL | 15 requêtes d'analyse (R1–R15) |
-| Application | Description de l'interface console Python |
-| Annexes | Code source, scripts SQL |
+### Étape A — Base de données
 
-### Autres ressources
+Depuis la racine du projet (`QuFiSQL/`), exécuter **dans cet ordre** :
 
-| Ressource                            | Description |
-|--------------------------------------|-------------|
-| [Rapport (PDF, en anglais)](docs/BDD_report.pdf) | Rapport complet du projet (modélisation, requêtes, application) |
-| MCD (ci-dessous)                     | Modèle conceptuel de données — 7 entités, relations et cardinalités |
+**macOS / Linux / Git Bash :**
+```bash
+mysql -u root -p < sql/script_creation.sql
+mysql -u root -p < sql/ScriptDML.sql
+```
 
-### Modèle conceptuel de données (MCD)
+**Windows (PowerShell)** — si `<` ne fonctionne pas, voir [§2 ci-dessous](#2-exécuter-les-scripts-sql-détails).
 
-![Modèle conceptuel de données — Quant Finance](docs/MCD_Quant_Finance.jpg)
+Vérification rapide :
+```sql
+USE quant_finance;
+SELECT COUNT(*) FROM Client;       -- doit retourner 8
+SELECT COUNT(*) FROM Gestionnaire; -- doit retourner 6
+```
 
-Le schéma couvre la chaîne **Gestionnaire → Client → Portefeuille → Position / Transaction**, avec les instruments financiers et leur historique de cours.
+### Étape B — Application Python
+
+**macOS / Linux :**
+```bash
+cp .env.example .env
+```
+
+**Windows (PowerShell) :**
+```powershell
+Copy-Item .env.example .env
+```
+
+Éditer `.env` — renseigner `DB_PASSWORD` (mot de passe MySQL `root`) :
+
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=votre_mot_de_passe
+DB_NAME=quant_finance
+```
+
+Puis (nécessite **Poetry** — voir [Installer Poetry](#installer-poetry-si-nécessaire) si la commande `poetry` n'est pas reconnue) :
+```bash
+poetry config virtualenvs.in-project true
+poetry install
+poetry run python -m src
+```
+
+Si tout fonctionne :
+```
+Quant Finance Console Application
+Connecting to MySQL...
+Connected successfully.
+```
+
+### Checklist
+
+```
+[ ] MySQL démarré
+[ ] script_creation.sql exécuté
+[ ] ScriptDML.sql exécuté
+[ ] Poetry installé (`poetry --version`)
+[ ] .env configuré (DB_PASSWORD)
+[ ] poetry install
+[ ] poetry run python -m src  →  Connected successfully.
+```
 
 ---
 
-## Instructions de lancement
+## Installation détaillée
 
-Le projet comporte **deux parties distinctes** à configurer séparément :
+Le projet comporte **deux parties** à configurer séparément :
 
 | Partie | Rôle | Où l'exécuter |
 |--------|------|---------------|
 | **Base de données MySQL** | Créer les tables et insérer les données | MySQL Workbench ou terminal (`mysql`) |
 | **Application Python** | Menu console (CRUD, recherche, stats) | Terminal ou IDE (Cursor, VS Code, PyCharm) |
-
-> **Important :** les scripts SQL (`sql/*.sql`) ne s'exécutent **pas** dans l'IDE Python. L'application Python se contente de **se connecter** à une base déjà créée.
 
 ### Prérequis
 
@@ -89,7 +136,43 @@ Le projet comporte **deux parties distinctes** à configurer séparément :
 |-------|---------|--------------|
 | Python | 3.10+ | `python --version` ou `python3 --version` |
 | Poetry | 2.x | `poetry --version` |
-| MySQL Server | 8+ | Voir étape 1 ci-dessous |
+| MySQL Server | 8+ | Voir §1 ci-dessous |
+
+### Installer Poetry (si nécessaire)
+
+**Poetry**, c'est quoi ? C'est le **gestionnaire de dépendances Python** du projet (équivalent de `npm` pour Node.js). Il lit [`pyproject.toml`](pyproject.toml), crée l'environnement virtuel `.venv/` et installe les bibliothèques nécessaires (`mysql-connector-python`, etc.). Les commandes `poetry install` et `poetry run python -m src` de l'**Étape B** passent par Poetry.
+
+Vérifier si Poetry est déjà installé :
+```bash
+poetry --version
+```
+
+Si la commande n'est pas reconnue, installer Poetry :
+
+**Windows (PowerShell) :**
+```powershell
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+```
+Puis **fermer et rouvrir** le terminal. Si `poetry` reste introuvable, ajouter `%APPDATA%\Python\Scripts` au PATH Windows.
+
+**Alternative Windows / macOS / Linux :**
+```bash
+pip install poetry
+# ou
+pip3 install poetry
+```
+
+**macOS (Homebrew) :**
+```bash
+brew install poetry
+```
+
+**macOS / Linux (installateur officiel) :**
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+Documentation complète : [python-poetry.org](https://python-poetry.org/docs/#installation)
 
 ### Compatibilité multi-OS
 
@@ -102,22 +185,7 @@ Compatible **Windows 10+**, **macOS 12+** (Intel et Apple Silicon) et **Linux**.
 | Interpréteur Poetry | `.venv/Scripts/python.exe` | `.venv/bin/python` |
 | Scripts SQL (CLI) | Voir alternative PowerShell ci-dessous | `mysql -u root -p < sql/...` |
 
----
-
-### Étape 0 — Vue d'ensemble (ordre obligatoire)
-
-```
-1. Installer et démarrer MySQL Server
-2. Exécuter sql/script_creation.sql   → crée les tables (structure)
-3. Exécuter sql/ScriptDML.sql         → insère les données de test
-4. Copier .env.example → .env         → configurer le mot de passe MySQL
-5. poetry install                       → installer les dépendances Python
-6. poetry run python -m src             → lancer l'application
-```
-
----
-
-### Étape 1 — Installer et configurer MySQL
+### 1. Installer MySQL (si nécessaire)
 
 #### Windows
 
@@ -182,9 +250,7 @@ Si vous voyez le prompt `mysql>`, la connexion fonctionne. Tapez `EXIT;` pour qu
 > `echo 'export PATH="/opt/homebrew/opt/mysql/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc`  
 > (Intel : remplacer `/opt/homebrew` par `/usr/local`)
 
----
-
-### Étape 2 — Créer la base de données (scripts SQL)
+### 2. Exécuter les scripts SQL (détails)
 
 Deux scripts, **dans cet ordre** :
 
@@ -233,9 +299,7 @@ SELECT COUNT(*) FROM Client;       -- doit retourner 8
 SELECT COUNT(*) FROM Gestionnaire; -- doit retourner 6
 ```
 
----
-
-### Étape 3 — Configurer les accès MySQL (fichier `.env`)
+### 3. Configurer `.env`
 
 Copier le template et renseigner **votre** mot de passe MySQL :
 
@@ -260,11 +324,7 @@ DB_NAME=quant_finance
 
 > **Important :** le fichier `.env` n'est **jamais** versionné (secrets). Seul `.env.example` est commité.
 
----
-
-### Étape 4 — Installer les dépendances Python
-
-Depuis la racine du projet :
+### 4. Installer et lancer l'application
 
 ```bash
 poetry config virtualenvs.in-project true
@@ -274,10 +334,6 @@ poetry install
 Cela crée un environnement virtuel `.venv/` et installe :
 - `mysql-connector-python` — connexion MySQL
 - `python-dotenv` — lecture du fichier `.env`
-
----
-
-### Étape 5 — Lancer l'application
 
 **Terminal (recommandé) — macOS, Linux et Windows :**
 ```bash
@@ -302,17 +358,9 @@ poetry run python main.py
 
 > Sous macOS, ouvrir le **Terminal** intégré (Cursor/VS Code : `` Ctrl+` ``) ou l'application Terminal, se placer dans le dossier `QuFiSQL/`, puis lancer les commandes Poetry ci-dessus.
 
-Si la connexion réussit, vous verrez :
-```
-Quant Finance Console Application
-Connecting to MySQL...
-Connected successfully.
-```
-Puis le menu interactif s'affiche.
-
 ---
 
-### Dépannage (problèmes courants)
+## Dépannage
 
 | Erreur | Cause probable | Windows | macOS |
 |--------|----------------|---------|-------|
@@ -320,8 +368,8 @@ Puis le menu interactif s'affiche.
 | `Access denied for user 'root'@'localhost'` | Mot de passe incorrect | Vérifier `DB_PASSWORD` dans `.env` | Idem |
 | `Unknown database 'quant_finance'` | Scripts SQL non exécutés | Relancer `script_creation.sql` puis `ScriptDML.sql` | Idem |
 | `Table 'quant_finance.Client' doesn't exist` | DDL non exécuté | Exécuter `script_creation.sql` | Idem |
-| `poetry: command not found` | Poetry non installé | `pip install poetry` | `pip install poetry` ou `brew install poetry` |
-| `mysql: command not found` | Client MySQL absent du PATH | Réinstaller MySQL ou ajouter au PATH | `brew install mysql` puis configurer le PATH (voir étape 1) |
+| `poetry: command not found` | Poetry non installé | [Installer Poetry](#installer-poetry-si-nécessaire) (`pip install poetry`) | Idem, ou `brew install poetry` |
+| `mysql: command not found` | Client MySQL absent du PATH | Réinstaller MySQL ou ajouter au PATH | `brew install mysql` puis configurer le PATH (voir §1) |
 | Menu vide / aucun client | DML non exécuté | Exécuter `ScriptDML.sql` | Idem |
 
 **Réinitialiser complètement la base (macOS / Linux / Git Bash) :**
@@ -337,6 +385,36 @@ mysql -u root -p -e "DROP DATABASE IF EXISTS quant_finance;"
 Get-Content sql/script_creation.sql | mysql -u root -p
 Get-Content sql/ScriptDML.sql | mysql -u root -p
 ```
+
+---
+
+## Documentation
+
+### Rapport BDD
+
+**Livrable principal du projet** — à consulter pour l'évaluation.
+
+**[Ouvrir le rapport (PDF) → docs/Rapport_BDD.pdf](docs/Rapport_BDD.pdf)**
+
+| Contenu du rapport | |
+|--------------------|---|
+| Modélisation | MCD, MLD, dictionnaire des données, règles métiers |
+| Requêtes SQL | 15 requêtes d'analyse (R1–R15) |
+| Application | Description de l'interface console Python |
+| Annexes | Code source, scripts SQL |
+
+### Autres ressources
+
+| Ressource | Description |
+|-----------|-------------|
+| [Rapport (PDF, en anglais)](docs/BDD_report.pdf) | Rapport complet du projet (modélisation, requêtes, application) |
+| MCD (ci-dessous) | Modèle conceptuel de données — 7 entités, relations et cardinalités |
+
+### Modèle conceptuel de données (MCD)
+
+![Modèle conceptuel de données — Quant Finance](docs/MCD_Quant_Finance.jpg)
+
+Le schéma couvre la chaîne **Gestionnaire → Client → Portefeuille → Position / Transaction**, avec les instruments financiers et leur historique de cours.
 
 ---
 
@@ -470,9 +548,9 @@ Certaines règles sont enforced directement dans le schéma MySQL (`sql/script_c
 
 ---
 
-## Guide de réutilisation
+## Arborescence du projet
 
-### Structure du projet
+Structure des dossiers et rôle de chaque composant :
 
 ```
 QuFiSQL/
@@ -504,6 +582,10 @@ QuFiSQL/
             ├── prompts.py  # Saisies utilisateur
             └── formatters.py  # Affichage console
 ```
+
+---
+
+## Guide de réutilisation
 
 ### Changer les identifiants MySQL
 

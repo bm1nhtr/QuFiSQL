@@ -1,4 +1,4 @@
-# Quant Finance — MySQL Console Application
+# [QuFiSQL] MySQL Console Application - Quant Finance
 
 > **French version (full documentation):** [README.md](README.md)
 
@@ -10,58 +10,114 @@ Command-line Python application for managing **clients** at a wealth-management 
 
 ## Table of contents
 
-- [Documentation](#documentation)
-  - [Project report](#project-report)
-  - [Entity-relationship diagram (ERD)](#entity-relationship-diagram-erd)
-- [Getting started](#getting-started)
+- [Quick Start](#quick-start)
+  - [Where to begin?](#where-to-begin)
+  - [Step A — Database](#step-a--database)
+  - [Step B — Python application](#step-b--python-application)
+  - [Checklist](#checklist)
+- [Detailed setup](#detailed-setup)
   - [Prerequisites](#prerequisites)
+  - [Install Poetry (if needed)](#install-poetry-if-needed)
   - [Cross-platform notes](#cross-platform-notes)
-  - [Step 0 — Overview](#step-0--overview)
-  - [Step 1 — Install MySQL](#step-1--install-and-configure-mysql)
-  - [Step 2 — Run SQL scripts](#step-2--create-the-database-sql-scripts)
-  - [Step 3 — Configure `.env`](#step-3--configure-mysql-access-env-file)
-  - [Step 4 — Install Python dependencies](#step-4--install-python-dependencies)
-  - [Step 5 — Run the application](#step-5--run-the-application)
-  - [Troubleshooting](#troubleshooting)
+  - [Install MySQL (if needed)](#1-install-mysql-if-needed)
+  - [Run SQL scripts (details)](#2-run-sql-scripts-details)
+  - [Configure `.env`](#3-configure-env)
+  - [Install and run the application](#4-install-and-run-the-application)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+  - [Project report (PDF)](#project-report)
+  - [Entity-relationship diagram (ERD)](#entity-relationship-diagram-erd)
 - [Project domain](#project-domain)
 - [Database schema](#database-schema)
-- [Project structure](#project-structure)
+- [Project tree](#project-tree)
 - [Menu features](#menu-features)
 - [Development](#development)
 
 ---
 
-## Documentation
+## Quick Start
 
-### Project report
+> Run SQL scripts in **MySQL Workbench** or the **terminal** — not in the Python IDE. The app only connects to an existing database.
 
-**Main project deliverable** (French).
+### Where to begin?
 
-**[Open report (PDF) → docs/BDD_report.pdf](docs/BDD_report.pdf)**
+| Your situation | Start here |
+|----------------|------------|
+| MySQL installed and running, database **not yet** created | **[Step A](#step-a--database)** — SQL scripts |
+| Database `quant_finance` **already** created and populated | **[Step B](#step-b--python-application)** — `.env` + Poetry + run app |
+| MySQL **not yet** installed | Install MySQL → [Detailed setup §1](#1-install-mysql-if-needed), then **Step A** → **Step B** |
+| **Poetry** not installed (`poetry: command not found`) | [Install Poetry](#install-poetry-if-needed), then **Step B** |
+| Error on launch | [Troubleshooting](#troubleshooting) |
 
-| Report contents | |
-|-----------------|---|
-| Modelling | ERD, logical schema, data dictionary, business rules |
-| SQL queries | 15 analytical queries (R1–R15) |
-| Application | Python console interface description |
-| Appendices | Source code, SQL scripts |
+### Step A — Database
 
-### Other resources
+From the project root (`QuFiSQL/`), run **in this order**:
 
-| Resource | Description |
-|----------|-------------|
-| [Full report (PDF, French)](docs/Rapport_BDD.pdf) | Complete project report |
-| ERD (below) | Conceptual data model — 7 entities, relationships and cardinalities |
+**macOS / Linux / Git Bash:**
+```bash
+mysql -u root -p < sql/script_creation.sql
+mysql -u root -p < sql/ScriptDML.sql
+```
 
-### Entity-relationship diagram (ERD)
+**Windows (PowerShell)** — if `<` fails, see [§2 below](#2-run-sql-scripts-details).
 
-![Conceptual data model — Quant Finance](docs/MCD_Quant_Finance.jpg)
+Quick verify:
+```sql
+USE quant_finance;
+SELECT COUNT(*) FROM Client;       -- should return 8
+SELECT COUNT(*) FROM Gestionnaire; -- should return 6
+```
 
-The schema covers **Manager → Client → Portfolio → Position / Transaction**, with financial instruments and price history.
+### Step B — Python application
+
+**macOS / Linux:**
+```bash
+cp .env.example .env
+```
+
+**Windows (PowerShell):**
+```powershell
+Copy-Item .env.example .env
+```
+
+Edit `.env` — set `DB_PASSWORD` (MySQL `root` password):
+
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=quant_finance
+```
+
+Then (requires **Poetry** — see [Install Poetry](#install-poetry-if-needed) if `poetry` is not recognized):
+```bash
+poetry config virtualenvs.in-project true
+poetry install
+poetry run python -m src
+```
+
+On success:
+```
+Quant Finance Console Application
+Connecting to MySQL...
+Connected successfully.
+```
+
+### Checklist
+
+```
+[ ] MySQL running
+[ ] script_creation.sql executed
+[ ] ScriptDML.sql executed
+[ ] Poetry installed (`poetry --version`)
+[ ] .env configured (DB_PASSWORD)
+[ ] poetry install
+[ ] poetry run python -m src  →  Connected successfully.
+```
 
 ---
 
-## Getting started
+## Detailed setup
 
 The project has **two separate parts**:
 
@@ -70,15 +126,49 @@ The project has **two separate parts**:
 | **MySQL database** | Create tables and insert data | MySQL Workbench or terminal (`mysql`) |
 | **Python application** | Console menu (CRUD, search, stats) | Terminal or IDE (Cursor, VS Code, PyCharm) |
 
-> **Important:** SQL scripts (`sql/*.sql`) are **not** run from the Python IDE. The app only **connects** to an existing database.
-
 ### Prerequisites
 
 | Tool | Version | Check |
 |------|---------|-------|
 | Python | 3.10+ | `python --version` or `python3 --version` |
 | Poetry | 2.x | `poetry --version` |
-| MySQL Server | 8+ | See Step 1 below |
+| MySQL Server | 8+ | See §1 below |
+
+### Install Poetry (if needed)
+
+**What is Poetry?** It is the project's **Python dependency manager** (similar to `npm` for Node.js). It reads [`pyproject.toml`](pyproject.toml), creates the `.venv/` virtual environment, and installs required libraries (`mysql-connector-python`, etc.). **Step B** commands `poetry install` and `poetry run python -m src` rely on Poetry.
+
+Check if Poetry is already installed:
+```bash
+poetry --version
+```
+
+If the command is not found, install Poetry:
+
+**Windows (PowerShell):**
+```powershell
+(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
+```
+Then **close and reopen** the terminal. If `poetry` is still not found, add `%APPDATA%\Python\Scripts` to the Windows PATH.
+
+**Alternative (Windows / macOS / Linux):**
+```bash
+pip install poetry
+# or
+pip3 install poetry
+```
+
+**macOS (Homebrew):**
+```bash
+brew install poetry
+```
+
+**macOS / Linux (official installer):**
+```bash
+curl -sSL https://install.python-poetry.org | python3 -
+```
+
+Full docs: [python-poetry.org](https://python-poetry.org/docs/#installation)
 
 ### Cross-platform notes
 
@@ -91,18 +181,7 @@ Works on **Windows 10+**, **macOS 12+** (Intel & Apple Silicon), and **Linux**. 
 | Poetry interpreter | `.venv/Scripts/python.exe` | `.venv/bin/python` |
 | SQL scripts (CLI) | See PowerShell alternative below | `mysql -u root -p < sql/...` |
 
-### Step 0 — Overview
-
-```
-1. Install and start MySQL Server
-2. Run sql/script_creation.sql   → creates tables (DDL)
-3. Run sql/ScriptDML.sql         → inserts demo data (DML)
-4. Copy .env.example → .env      → set MySQL password
-5. poetry install                  → install Python dependencies
-6. poetry run python -m src        → launch the application
-```
-
-### Step 1 — Install and configure MySQL
+### 1. Install MySQL (if needed)
 
 #### Windows
 
@@ -151,9 +230,7 @@ If you see the `mysql>` prompt, the connection works. Type `EXIT;` to quit.
 > `echo 'export PATH="/opt/homebrew/opt/mysql/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc`  
 > (Intel Macs: replace `/opt/homebrew` with `/usr/local`)
 
-### Step 2 — Create the database (SQL scripts)
-
-Run **in this order** from the project root (`QuFiSQL/`):
+### 2. Run SQL scripts (details)
 
 | Script | Type | Action |
 |--------|------|--------|
@@ -172,15 +249,15 @@ The file `sql/requetes.sql` contains analytical **SELECT** queries (R1–R15) �
 
 #### Method 2 — Command line
 
-**macOS / Linux / Git Bash:**
+From the project root (`QuFiSQL/`):
 
+**macOS / Linux / Git Bash:**
 ```bash
 mysql -u root -p < sql/script_creation.sql
 mysql -u root -p < sql/ScriptDML.sql
 ```
 
 **Windows (PowerShell)** — if `<` redirection fails:
-
 ```powershell
 Get-Content sql/script_creation.sql | mysql -u root -p
 Get-Content sql/ScriptDML.sql | mysql -u root -p
@@ -200,7 +277,7 @@ SELECT COUNT(*) FROM Client;       -- should return 8
 SELECT COUNT(*) FROM Gestionnaire; -- should return 6
 ```
 
-### Step 3 — Configure MySQL access (`.env` file)
+### 3. Configure `.env`
 
 **macOS / Linux:** `cp .env.example .env`  
 **Windows (PowerShell):** `Copy-Item .env.example .env`
@@ -216,14 +293,12 @@ DB_NAME=quant_finance
 
 > `.env` is never committed. Only `.env.example` is versioned.
 
-### Step 4 — Install Python dependencies
+### 4. Install and run the application
 
 ```bash
 poetry config virtualenvs.in-project true
 poetry install
 ```
-
-### Step 5 — Run the application
 
 **Terminal (recommended) — macOS, Linux and Windows:**
 ```bash
@@ -245,15 +320,9 @@ poetry run python main.py
 
 > On macOS, use the built-in **Terminal** (Cursor/VS Code: `` Ctrl+` ``) or the Terminal app, `cd` into `QuFiSQL/`, then run the Poetry commands above.
 
-On success:
+---
 
-```
-Quant Finance Console Application
-Connecting to MySQL...
-Connected successfully.
-```
-
-### Troubleshooting
+## Troubleshooting
 
 | Error | Likely cause | Windows | macOS |
 |-------|--------------|---------|-------|
@@ -261,8 +330,8 @@ Connected successfully.
 | `Access denied for user 'root'@'localhost'` | Wrong password | Check `DB_PASSWORD` in `.env` | Same |
 | `Unknown database 'quant_finance'` | SQL scripts not run | Re-run `script_creation.sql` then `ScriptDML.sql` | Same |
 | `Table 'quant_finance.Client' doesn't exist` | DDL not run | Run `script_creation.sql` | Same |
-| `poetry: command not found` | Poetry not installed | `pip install poetry` | `pip install poetry` or `brew install poetry` |
-| `mysql: command not found` | MySQL client not in PATH | Reinstall MySQL or add to PATH | `brew install mysql` then configure PATH (see Step 1) |
+| `poetry: command not found` | Poetry not installed | [Install Poetry](#install-poetry-if-needed) (`pip install poetry`) | Same, or `brew install poetry` |
+| `mysql: command not found` | MySQL client not in PATH | Reinstall MySQL or add to PATH | `brew install mysql` then configure PATH (see §1) |
 | Empty menu / no clients | DML not run | Run `ScriptDML.sql` | Same |
 
 **Reset the database completely (macOS / Linux / Git Bash):**
@@ -278,6 +347,36 @@ mysql -u root -p -e "DROP DATABASE IF EXISTS quant_finance;"
 Get-Content sql/script_creation.sql | mysql -u root -p
 Get-Content sql/ScriptDML.sql | mysql -u root -p
 ```
+
+---
+
+## Documentation
+
+### Project report
+
+**Main project deliverable** (French).
+
+**[Open report (PDF) → docs/Rapport_BDD.pdf](docs/Rapport_BDD.pdf)**
+
+| Report contents | |
+|-----------------|---|
+| Modelling | ERD, logical schema, data dictionary, business rules |
+| SQL queries | 15 analytical queries (R1–R15) |
+| Application | Python console interface description |
+| Appendices | Source code, SQL scripts |
+
+### Other resources
+
+| Resource | Description |
+|----------|-------------|
+| [Report (PDF, English)](docs/BDD_report.pdf) | Complete project report |
+| ERD (below) | Conceptual data model — 7 entities, relationships and cardinalities |
+
+### Entity-relationship diagram (ERD)
+
+![Conceptual data model — Quant Finance](docs/MCD_Quant_Finance.jpg)
+
+The schema covers **Manager → Client → Portfolio → Position / Transaction**, with financial instruments and price history.
 
 ---
 
@@ -313,7 +412,9 @@ Full column definitions: [French README — Data dictionary](README.md#dictionna
 
 ---
 
-## Project structure
+## Project tree
+
+Folder layout and role of each component:
 
 ```
 QuFiSQL/
