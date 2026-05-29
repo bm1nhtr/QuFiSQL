@@ -24,6 +24,7 @@ Application Python en ligne de commande pour gérer les **clients** d'une socié
 - [Dépannage](#dépannage)
 - [Documentation](#documentation)
   - [Rapport BDD (PDF)](#rapport-bdd)
+  - [Vidéo de présentation (temporaire)](#vidéo-de-présentation-temporaire)
   - [Modèle conceptuel de données (MCD)](#modèle-conceptuel-de-données-mcd)
 - [Domaine choisi](#domaine-choisi)
 - [Règles métiers](#règles-métiers)
@@ -403,11 +404,18 @@ Get-Content sql/ScriptDML.sql | mysql -u root -p
 | Application | Description de l'interface console Python |
 | Annexes | Code source, scripts SQL |
 
+### Vidéo de présentation *(temporaire)*
+
+> Lien ajouté pour l'évaluation — à retirer après correction.
+
+**[Voir la vidéo de présentation → docs/TRAN_NOUARA_ProjetBDD_Video.mp4](docs/TRAN_NOUARA_ProjetBDD_Video.mp4)**
+
 ### Autres ressources
 
 | Ressource | Description |
 |-----------|-------------|
 | [Rapport (PDF, en anglais)](docs/BDD_report.pdf) | Rapport complet du projet (modélisation, requêtes, application) |
+| [Vidéo de présentation *(temporaire)*](docs/TRAN_NOUARA_ProjetBDD_Video.mp4) | Soutenance du projet (MP4) |
 | MCD (ci-dessous) | Modèle conceptuel de données — 7 entités, relations et cardinalités |
 
 ### Modèle conceptuel de données (MCD)
@@ -564,6 +572,7 @@ QuFiSQL/
 ├── docs/                   # Documentation et livrables
 │   ├── Rapport_BDD.pdf     # Rapport complet du projet (Français)
 │   ├── BDD_report.pdf      # Rapport complet du projet (English)
+│   ├── TRAN_NOUARA_ProjetBDD_Video.mp4  # Vidéo de présentation (temporaire)
 │   └── MCD_Quant_Finance.jpg  # Modèle conceptuel de données
 ├── sql/                    # Scripts SQL
 │   ├── script_creation.sql # DDL (schéma)
