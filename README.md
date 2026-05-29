@@ -64,7 +64,7 @@ mysql -u root -p < sql/script_creation.sql
 mysql -u root -p < sql/ScriptDML.sql
 ```
 
-**Windows (PowerShell)** — si `<` ne fonctionne pas, voir [§2 ci-dessous](#2-exécuter-les-scripts-sql-détails).
+**Windows** — utiliser **MySQL Workbench** ([§2](#2-exécuter-les-scripts-sql-détails)) ; éviter PowerShell pour le DML (accents français mal encodés).
 
 Vérification rapide :
 ```sql
@@ -100,6 +100,8 @@ poetry config virtualenvs.in-project true
 poetry install
 poetry run python -m src
 ```
+
+> **Sans Poetry :** `pip install mysql-connector-python python-dotenv` puis `python -m src` (depuis la racine du projet).
 
 Si tout fonctionne :
 ```
@@ -280,7 +282,7 @@ mysql -u root -p < sql/script_creation.sql
 mysql -u root -p < sql/ScriptDML.sql
 ```
 
-**Windows (PowerShell)** — si la redirection `<` ne fonctionne pas :
+**Windows (PowerShell)** — si la redirection `<` ne fonctionne pas (préférer Workbench si accents corrompus) :
 ```powershell
 Get-Content sql/script_creation.sql | mysql -u root -p
 Get-Content sql/ScriptDML.sql | mysql -u root -p
@@ -370,6 +372,8 @@ poetry run python main.py
 | `Unknown database 'quant_finance'` | Scripts SQL non exécutés | Relancer `script_creation.sql` puis `ScriptDML.sql` | Idem |
 | `Table 'quant_finance.Client' doesn't exist` | DDL non exécuté | Exécuter `script_creation.sql` | Idem |
 | `poetry: command not found` | Poetry non installé | [Installer Poetry](#installer-poetry-si-nécessaire) (`pip install poetry`) | Idem, ou `brew install poetry` |
+| `pyproject.toml changed significantly...` | `poetry.lock` obsolète | `poetry lock` puis `poetry install` | Idem |
+| Erreur `Duplicate entry` à l'INSERT | `ScriptDML.sql` relancé | Réinitialiser la base (ci-dessous) | Idem |
 | `mysql: command not found` | Client MySQL absent du PATH | Réinstaller MySQL ou ajouter au PATH | `brew install mysql` puis configurer le PATH (voir §1) |
 | Menu vide / aucun client | DML non exécuté | Exécuter `ScriptDML.sql` | Idem |
 
